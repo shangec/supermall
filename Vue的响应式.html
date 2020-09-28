@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>title</title>
+</head>
+
+<body>
+    <!-- 
+        1.app.message修改数据，Vue内部如何监听message数据的改变 
+        答：Object.defineProperty -> 监听对象属性的改变
+        2.当数据发送改变，Vue是如何通知哪些地方，界面发生刷新
+        答：发布订阅者模式
+    -->
+    <div id="app">
+        {{message}}
+    </div>
+    <script src="./node_modules/vue/dist/vue.js"></script>
+    <script>
+        const app = new Vue({
+            el: '#app',
+            data: {
+                message: '你好啊',
+                name: 'Sec'
+            }
+        })
+    </script>
+
+    <script>
+        const obj = {
+            message: '你好啊',
+            name: 'Sec'
+        }
+
+        Object.keys(obj).forEach(key => {
+            let value = obj[key]
+
+            Object.defineProperty(obj, key, {
+                set(newValue) {
+                    console.log('监听' + key + '改变')
+                    // 告诉谁？哪里用到就告诉谁？谁在用？
+                    // 根据解析html代码，获取到哪些地方在用，调用get
+                    value = newValue
+                },
+                get() {
+                    console.log('获取' + key + '对应的值')
+                    return value
+                }
+            })
+        });
+
+        // obj.name = 'James'
+        // 发布者订阅者模式
+        // 发布者
+        class Dep {
+            constructor() {
+                this.subs = []
+            }
+
+            addSub(watcher) {
+                this.subs.push(watcher)
+            }
+
+            notify() {
+                this.subs.forEach(item => {
+                    item.update()
+                })
+            }
+        }
+
+        // 订阅者
+        class Watcher {
+            constructor(name) {
+                this.name = name
+            }
+
+            update() {
+                console.log(this.name + '发生update')
+            }
+        }
+
+        const dep = new Dep()
+        const w1 = new Watcher('张三')
+        dep.addSub(w1)
+
+        const w2 = new Watcher('李四')
+        dep.addSub(w2)
+
+        const w3 = new Watcher('王五')
+        dep.addSub(w3)
+
+        dep.notify()
+    </script>
+</body>
+
+</html>
